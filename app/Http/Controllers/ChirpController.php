@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Chirp;
+use App\Models\Reply;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\RedirectResponse;
@@ -16,12 +17,13 @@ class ChirpController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(): View
+    public function index()
     {
-        return view('chirps.index', [
-            'chirps' => Chirp::with('user')->latest()->get(),
-        ]);
+        $chirps = Chirp::with('user', 'replies')->latest()->get();
+
+        return view('chirps.index', compact('chirps'));
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -105,6 +107,9 @@ class ChirpController extends Controller
     public function destroy(Chirp $chirp): RedirectResponse
     {
         $this->authorize('delete', $chirp);
+
+        // Delete related replies before deleting the chirp
+        $chirp->replies()->delete();
 
         $chirp->delete();
 
